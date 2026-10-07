@@ -62,6 +62,14 @@ func init() {
 }
 
 func main() {
+	// walk.InitApp() TEM que ser a primeira chamada da biblioteca de janela:
+	// é ela que registra a classe da janela principal. Sem isso o Windows
+	// responde "CreateWindowEx" e a janela nunca abre.
+	if _, err := walk.InitApp(); err != nil {
+		walk.MsgBox(nil, appTitle, "Erro ao iniciar a interface:\n\n"+err.Error(), walk.MsgBoxIconError)
+		os.Exit(1)
+	}
+
 	startTray := false
 	for _, arg := range os.Args[1:] {
 		if arg == "--tray" {
