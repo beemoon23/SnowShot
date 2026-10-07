@@ -1,0 +1,4 @@
+rsrc.syso
+*.exe
+*.exe.old
+*.exe.new
