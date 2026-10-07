@@ -1,0 +1,88 @@
+name: Build SnowShot
+
+# A cada commit na main: compila, gera o instalador e publica tudo na release
+# "latest" (link fixo para baixar, e é dela que o próprio app se atualiza).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Número da versão (build)
+        shell: pwsh
+        run: |
+          $sha = "${{ github.sha }}".Substring(0, 7)
+          "SHORT_SHA=$sha" >> $env:GITHUB_ENV
+
+      - name: Resolver dependências
+        run: go mod tidy
+
+      - name: Embutir manifesto e ícone
+        shell: pwsh
+        run: |
+          go install github.com/akavel/rsrc@latest
+          if (Test-Path snow.ico) {
+            rsrc -manifest app.manifest -ico snow.ico -o rsrc.syso
+          } else {
+            rsrc -manifest app.manifest -o rsrc.syso
+          }
+
+      - name: Checar o código
+        run: go vet ./...
+
+      - name: Compilar
+        shell: pwsh
+        run: go build -ldflags "-H=windowsgui -s -w -X main.buildID=$env:SHORT_SHA" -o SnowShot.exe .
+
+      - name: Gerar o instalador (Setup)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          & $iscc "/DAppVersion=$env:SHORT_SHA" installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Guardar os arquivos (aba Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnowShot
+          path: |
+            SnowShot.exe
+            SnowShot-Setup.exe
+
+      - name: Publicar na release "latest" (link fixo)
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+          files="SnowShot.exe"
+          if [ -f SnowShot-Setup.exe ]; then
+            files="$files SnowShot-Setup.exe"
+          fi
+          gh release create latest $files \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "SnowShot (build $SHORT_SHA)" \
+            --notes "build:$SHORT_SHA — baixe o SnowShot.exe (portátil) ou o SnowShot-Setup.exe (instalador)." \
+            --latest
