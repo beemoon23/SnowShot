@@ -40,6 +40,25 @@ solte. O tamanho aparece em tempo real. `Esc` ou o botão direito cancelam.
 WhatsApp Web, Discord, Word, Paint...) e/ou para um **arquivo PNG** na pasta escolhida
 (padrão: `Imagens\SnowShot`). Um aviso aparece perto do relógio.
 
+### Editor (setas, texto, borrar)
+
+Ligue **"Abrir o editor antes"** na janela principal (ou clique em **Editar** numa captura da lista).
+Depois de capturar, abre o editor com a imagem:
+
+| Ferramenta | Atalho | Como usar |
+| ---------- | ------ | --------- |
+| Seta       | `A`    | Arraste do começo até a ponta. `Shift` mantém o ângulo reto |
+| Retângulo  | `R`    | Arraste. `Shift` faz um quadrado |
+| Destaque   | `H`    | Arraste sobre o texto, como um marca-texto |
+| Borrar     | `B`    | Arraste sobre o que quer esconder (vira um mosaico) |
+| Texto      | `T`    | Clique e digite. `Enter` = nova linha; `Esc` ou clique fora termina |
+| Número     | `N`    | Clique para colocar 1, 2, 3… (bom para listar passos) |
+
+Cores e tamanho (`1`, `2`, `3` = P, M, G) ficam na barra. `Ctrl+Z` desfaz, `Ctrl+Y` refaz,
+**`Enter` conclui** (copia e/ou salva, como sempre) e **`Esc` descarta**. A imagem original nunca é
+alterada: o que sai do editor é sempre uma captura nova. Imagens grandes aparecem reduzidas para
+caber na janela, mas as marcações são aplicadas na resolução original.
+
 ### Opções
 
 - **Atalhos:** cada ação tem uma lista de atalhos prontos (ou "Desativado"). Se algum estiver
@@ -78,6 +97,9 @@ Para o ícone entrar no `.exe`, o arquivo `snow.ico` precisa estar na raiz do re
 | `main.go`             | Janela, fluxo de captura, lista de capturas recentes                         |
 | `capture.go`          | Foto da tela, recorte, PNG, área de transferência, janela/monitor alvo       |
 | `overlay.go`          | Seletor de área (tela congelada, escurecida, com o retângulo do mouse)       |
+| `editor.go`           | Janela do editor, barra de ferramentas, mouse e teclado                      |
+| `edit_render.go`      | Desenho das marcações (seta, retângulo, destaque, borrar, texto, número)     |
+| `edit_text.go`        | Texto do editor com as fontes do Windows                                     |
 | `hotkey.go`           | Atalhos globais (numa thread própria) e a lista de atalhos prontos           |
 | `winapi.go`           | Chamadas diretas ao Windows (user32, gdi32, kernel32, dwmapi)                |
 | `tray.go`             | Ícone da bandeja e menu                                                      |
@@ -103,7 +125,7 @@ Compilada assim, a cópia fica sem código de versão e não se atualiza sozinha
 ## Limites desta versão
 
 - Só captura imagens estáticas (sem gravação de tela por enquanto).
-- Ainda não tem editor (setas, texto, borrar). É o próximo passo.
+- O editor não tem zoom nem mover marcações depois de colocadas (use Ctrl+Z e refaça).
 - Janelas de programas com proteção de conteúdo (alguns players com DRM) saem pretas.
 - Em computadores com monitores de escalas diferentes (100% e 150%, por exemplo) o app usa o
   tamanho real em pixels de cada tela.

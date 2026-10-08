@@ -19,6 +19,8 @@ type AppSettings struct {
 	HotWindow int `json:"hotWindow"`
 
 	TrayMin bool `json:"trayMin"` // fechar/minimizar manda para a bandeja
+
+	OpenEditor bool `json:"openEditor"` // abrir o editor depois de capturar
 }
 
 func defaultSettings() AppSettings {

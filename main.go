@@ -229,7 +229,49 @@ func (a *SnowApp) capture(kind captureKind, restoreWindow bool) {
 		}
 	}
 
+	if cfg.OpenEditor {
+		a.setStatus("Editando a captura…")
+		out, ok, err := runEditor(bm)
+		if err != nil {
+			a.fail(err)
+			return
+		}
+		if !ok {
+			a.setStatus("Captura descartada.")
+			return
+		}
+		bm = out
+	}
+
 	a.deliver(bm, cfg)
+}
+
+// editRecent abre uma captura da lista no editor. O resultado vai para a
+// área de transferência e/ou vira um arquivo novo (o original fica intacto).
+func (a *SnowApp) editRecent(path string) {
+	if !atomic.CompareAndSwapInt32(&a.capturing, 0, 1) {
+		return
+	}
+	defer atomic.StoreInt32(&a.capturing, 0)
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	bm, err := loadBitmapFile(path)
+	if err != nil {
+		a.fail(err)
+		return
+	}
+	a.setStatus("Editando " + filepath.Base(path) + "…")
+	out, ok, err := runEditor(bm)
+	if err != nil {
+		a.fail(err)
+		return
+	}
+	if !ok {
+		a.setStatus("Edição descartada.")
+		return
+	}
+	a.deliver(out, a.cfg())
 }
 
 func (a *SnowApp) fail(err error) {
@@ -341,9 +383,9 @@ func (a *SnowApp) selectedRecent() string {
 
 func (a *SnowApp) run(startTray bool) error {
 	var (
-		areaCB, fullCB, winCB, delayCB *walk.ComboBox
-		outEdit                        *walk.LineEdit
-		copyCK, saveCK, trayCK, autoCK *walk.CheckBox
+		areaCB, fullCB, winCB, delayCB         *walk.ComboBox
+		outEdit                                *walk.LineEdit
+		copyCK, saveCK, trayCK, autoCK, editCK *walk.CheckBox
 	)
 	ready := false
 	s := a.settings
@@ -361,6 +403,7 @@ func (a *SnowApp) run(startTray bool) error {
 			HotFull:       clamp(fullCB.CurrentIndex(), len(hotkeyPresets)),
 			HotWindow:     clamp(winCB.CurrentIndex(), len(hotkeyPresets)),
 			TrayMin:       trayCK.Checked(),
+			OpenEditor:    editCK.Checked(),
 		}
 		if !cur.CopyClipboard && !cur.SaveFile {
 			cur.CopyClipboard = true
@@ -403,8 +446,8 @@ func (a *SnowApp) run(startTray bool) error {
 	err := MainWindow{
 		AssignTo: &a.mw,
 		Title:    appTitle + versionSuffix() + " — capturas de tela",
-		MinSize:  Size{Width: 640, Height: 640},
-		Size:     Size{Width: 700, Height: 700},
+		MinSize:  Size{Width: 640, Height: 700},
+		Size:     Size{Width: 700, Height: 740},
 		Visible:  !startTray,
 		Layout:   VBox{},
 		Children: []Widget{
@@ -445,6 +488,7 @@ func (a *SnowApp) run(startTray bool) error {
 				Children: []Widget{
 					CheckBox{AssignTo: &copyCK, Text: "Copiar para a área de transferência (cole com Ctrl+V)", Checked: s.CopyClipboard, OnCheckedChanged: persist},
 					CheckBox{AssignTo: &saveCK, Text: "Salvar um arquivo PNG na pasta abaixo", Checked: s.SaveFile, OnCheckedChanged: persist},
+					CheckBox{AssignTo: &editCK, Text: "Abrir o editor antes (setas, texto, borrar). Enter conclui, Esc descarta", Checked: s.OpenEditor, OnCheckedChanged: persist},
 					Composite{
 						Layout: HBox{MarginsZero: true},
 						Children: []Widget{
@@ -487,7 +531,7 @@ func (a *SnowApp) run(startTray bool) error {
 					},
 				},
 			},
-			Label{Text: "Últimas capturas (duplo clique abre a imagem):"},
+			Label{Text: "Últimas capturas (duplo clique abre a imagem; \"Editar\" abre no editor):"},
 			ListBox{
 				AssignTo: &a.recentLB,
 				Model:    []string{},
@@ -523,6 +567,11 @@ func (a *SnowApp) run(startTray bool) error {
 							}()
 						},
 					},
+					PushButton{Text: "Editar", OnClicked: func() {
+						if p := a.selectedRecent(); p != "" {
+							go a.editRecent(p)
+						}
+					}},
 					PushButton{Text: "Abrir", OnClicked: func() {
 						if p := a.selectedRecent(); p != "" {
 							openFile(p)

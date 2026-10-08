@@ -49,6 +49,16 @@ var (
 	pEmptyClipboard           = user32.NewProc("EmptyClipboard")
 	pSetClipboardData         = user32.NewProc("SetClipboardData")
 	pRegisterClipboardFormatW = user32.NewProc("RegisterClipboardFormatW")
+	pAdjustWindowRectEx       = user32.NewProc("AdjustWindowRectEx")
+	pGetClientRect            = user32.NewProc("GetClientRect")
+	pFillRect                 = user32.NewProc("FillRect")
+	pSetCursor                = user32.NewProc("SetCursor")
+	pScreenToClient           = user32.NewProc("ScreenToClient")
+	pGetKeyState              = user32.NewProc("GetKeyState")
+	pMessageBoxW              = user32.NewProc("MessageBoxW")
+	pGetDpiForWindow          = user32.NewProc("GetDpiForWindow")
+	pGetDpiForSystem          = user32.NewProc("GetDpiForSystem")
+	pLoadIconW                = user32.NewProc("LoadIconW")
 
 	// gdi32
 	pCreateCompatibleDC     = gdi32.NewProc("CreateCompatibleDC")
@@ -65,6 +75,12 @@ var (
 	pSetBkColor             = gdi32.NewProc("SetBkColor")
 	pSetTextColor           = gdi32.NewProc("SetTextColor")
 	pTextOutW               = gdi32.NewProc("TextOutW")
+	pStretchDIBits          = gdi32.NewProc("StretchDIBits")
+	pSetStretchBltMode      = gdi32.NewProc("SetStretchBltMode")
+	pCreateSolidBrush       = gdi32.NewProc("CreateSolidBrush")
+	pCreateFontW            = gdi32.NewProc("CreateFontW")
+	pGetTextExtentPoint32W  = gdi32.NewProc("GetTextExtentPoint32W")
+	pGdiFlush               = gdi32.NewProc("GdiFlush")
 
 	// kernel32
 	pGetCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
